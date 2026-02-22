@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 1:*/
+            gap: 20px; /* 2:*/
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .container, .links-section {
+            text-align: center;
+            width: 430px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* 3: */
+            
+        }
+        .links-section{
+            height:max-content;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            resize: none;
+            box-sizing: border-box;
+        }
+        h5{
+            text-align: left;
+        }
+        .file-input {
+            width: 100%;
+            margin-top: 10px;
+            text-align: left;
+        }
+        .file-input input {
+            width: auto;
+        }
+        .links-section {
+            flex: 1; /*  4: */
+        }
+        .links-section h3 {
+            margin-bottom: 10px;
+        }
+        .link-item {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+        .lime-section {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .lime-section button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .lime-section button:hover {
+            background-color: #45a049;
+        }
+
+        /* File Analysis Section */
+        #fileAnalysis {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        #fileAnalysis h4 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        #fileAnalysis .file-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #fileAnalysis .file-item:last-child {
+            border-bottom: none;
+        }
+
+        #fileAnalysis .file-item span {
+            font-weight: bold;
+            color: #4CAF50; /* Green for benign */
+        }
+
+        #fileAnalysis .file-item span.malicious {
+            color: #FF6347; /* Red for malicious */
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+}
+
+    </style>
+</head>
+<body>
+    
+<div class="container">
+    <h2>Email Phishing Detector</h2>
+    <textarea id="emailContent" placeholder="Paste email content here..."></textarea>
+    <br>
+    <div class="file-input">
+        <label for="emailFile">Upload .eml file:</label>
+        <input type="file" id="emailFile" accept=".eml">
+    </div>
+    <br>
+    
+
+    <button onclick="submitEmail()">Analyze</button>
+    <h3>Content analysis</h3>
+    <div id="result"></div>
+
+    <h3>File Analysis</h3>
+    <div id="fileAnalysis"></div>
+
+    
+</div>
+<div class="links-section">
+    <h3>Contain Possible Links</h3>
+    <div id="linksList"></div>
+    <br>
+    <br>
+    <div class="final-result">
+        <h3>Final output</h3>
+        <div id="final-output"></div>
+    </div>
+    <div class="lime-section">
+        <h3>Explanation Visualization</h3>
+        <button onclick="showLIME()">LIME</button>
+        <button onclick="showSHAP()">Similar Links</button>
+        <iframe id="explanationFrame" src="" width="100%" height="400px" style="border: none;"></iframe>
+    </div>
+</div>
+
+
+
+<script>
+    async function submitEmail() {
+        const emailContent = document.getElementById("emailContent").value;
+        const emailFile = document.getElementById("emailFile").files[0];
+
+        // Clear previous result
+        document.getElementById("result").innerText = "Analyzing...";
+        document.getElementById("linksList").innerHTML = ""; 
+        document.getElementById("final-output").innerHTML = "";
+        document.getElementById("explanationFrame").src = ""; // Reset LIME explanation
+        document.getElementById("fileAnalysis").innerHTML = "";
+
+        if (emailFile) {
+        // Use FormData to send the file as 'multipart/form-data'
+        const formData = new FormData();
+        formData.append('eml_file', emailFile);
+
+        try {
+            // Send the .eml file to the backend
+            const response = await fetch('http://127.0.0.1:5000/analyze_email', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+
+            
+
+            // Display the result correctly
+            document.getElementById("result").innerText = 
+                `Result: ${result.Prediction}, Accuracy: ${result.Model_Accuracy}`;
+
+            // Display file analysis
+            if (result.file_analysis && result.file_analysis.length > 0) {
+                result.file_analysis.forEach(file => {
+                    const fileItem = document.createElement("div");
+                    fileItem.innerHTML = `File: ${file.FileName}, Result: ${file.Prediction === 0 ? "Benign" : "Malicious"}, Confidence: ${(file.ConfidenceScore * 100).toFixed(2)}%`;
+                    document.getElementById("fileAnalysis").appendChild(fileItem);
+                });
+            } else {
+                document.getElementById("fileAnalysis").innerText = "No files analyzed.";
+            }    
+            // Display the links and accuracies in the links list
+            if (result.links && result.links.length > 0) {
+                    result.links.forEach(link => {
+                        const linkItem = document.createElement("div");
+                        linkItem.className = "link-item";
+                        linkItem.innerHTML = `Link: ${link.url}</a>, Result: ${link.prediction_label}, Accuracy: ${link.accuracy_model}`;
+                        document.getElementById("linksList").appendChild(linkItem);
+                    });
+                } else {
+                    document.getElementById("linksList").innerText = "No links found.";
+                }
+
+            document.getElementById("final-output").innerText = 
+            `Result: ${result.OutputLabel}, Accuracy: ${result.output}`;
+
+            window.limeURL = result.LIME_Explanation_URL;
+            window.shapURL = result.SHAP_Explanation_URL;
+            
+            document.getElementById("explanationFrame").src = window.limeURL;
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById("result").innerText = 'Error occurred while analyzing the email';
+        }
+    } else if (emailContent) {
+        // Use JSON for pasting content
+        const requestBody = { email_content: emailContent };
+
+        try {
+            // Send the email content as JSON to the backend
+            const response = await fetch('http://127.0.0.1:5000/analyze_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+
+            // Display the result correctly
+            document.getElementById("result").innerText = 
+                `Result: ${result.Prediction}, Accuracy: ${result.Model_Accuracy}`;
+            // Display the links and accuracies in the links list
+            if (result.links && result.links.length > 0) {
+                    result.links.forEach(link => {
+                        const linkItem = document.createElement("div");
+                        linkItem.className = "link-item";
+                        linkItem.innerHTML = `Link: ${link.url}</a>, Result: ${link.prediction_label}, Accuracy: ${link.accuracy_model}`;
+                        document.getElementById("linksList").appendChild(linkItem);
+                    });
+                } else {
+                    document.getElementById("linksList").innerText = "No links found.";
+                }
+            
+            document.getElementById("final-output").innerText = 
+                `Result: ${result.OutputLabel}, Accuracy: ${result.output}`;
+            
+            // Save URLs for LIME and SHAP explanations
+            window.limeURL = result.LIME_Explanation_URL;
+            window.shapURL = result.SHAP_Explanation_URL;
+
+            // Default to show LIME
+            document.getElementById("explanationFrame").src = window.limeURL;
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById("result").innerText = 'Error occurred while analyzing the email';
+        }
+    } else {
+        document.getElementById("result").innerText = "Please provide email content or upload a .eml file.";
+    }
+    }
+
+    async function sendRequest(requestBody) {
+        try {
+            // Send email content to the backend
+            const response = await fetch('http://127.0.0.1:5000/analyze_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+
+            // Display the result correctly
+            document.getElementById("result").innerText = 
+                `Result: ${result.Prediction}, Accuracy: ${result.Model_Accuracy}`;
+
+            // Display the links and accuracies in the links list
+            if (result.links && result.links.length > 0) {
+                    result.links.forEach(link => {
+                        const linkItem = document.createElement("div");
+                        linkItem.className = "link-item";
+                        linkItem.innerHTML = `Link: ${link.url}</a>, Result: ${link.prediction_label}, Accuracy: ${link.accuracy_model}`;
+                        document.getElementById("linksList").appendChild(linkItem);
+                    });
+                } else {
+                    document.getElementById("linksList").innerText = "No links found.";
+                }
+
+            document.getElementById("final-output").innerText = 
+                `Result: ${result.OutputLabel}, Accuracy: ${result.output}`;
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById("result").innerText = 'Error occurred while analyzing the email';
+        }
+    }
+
+    function showLIME() {
+        document.getElementById("explanationFrame").src = window.limeURL || "";
+}
+
+    function showSHAP() {
+        document.getElementById("explanationFrame").src = window.shapURL || "";
+    }
+</script>
+</body>
+</html>
