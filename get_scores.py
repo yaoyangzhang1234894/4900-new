@@ -14,9 +14,21 @@ from scipy.sparse import csr_matrix
 # CODE FOR CHECK IF LINK IS IN DATABASE
 ######################################################################
 
-page_ranking_df = pd.read_csv("https://media.githubusercontent.com/media/spongeb0bzzz/CSI-4900/refs/heads/main/data/top10milliondomains.csv")
-page_ranking_df.columns = page_ranking_df.columns.str.strip()  # Clean column names
-page_ranking_df.set_index('Domain', inplace=True)  # Set index to 'Domain'
+# 尝试从本地加载，失败则用空的 DataFrame
+try:
+    page_ranking_df = pd.read_csv("data/top10milliondomains.csv")
+    page_ranking_df.columns = page_ranking_df.columns.str.strip()
+    if 'Domain' in page_ranking_df.columns:
+        page_ranking_df.set_index('Domain', inplace=True)
+    elif 'domain' in page_ranking_df.columns:
+        page_ranking_df.set_index('domain', inplace=True)
+    else:
+        page_ranking_df.set_index(page_ranking_df.columns[0], inplace=True)
+    print(f"Loaded page ranking data: {len(page_ranking_df)} rows")
+except Exception as e:
+    print(f"Warning: page ranking data unavailable ({e}). Using empty DataFrame.")
+    page_ranking_df = pd.DataFrame(columns=['Open Page Rank'])
+    page_ranking_df.index.name = 'Domain'
 
 def clean_link(link):
     # Validate if link is in a correct URL format
@@ -35,8 +47,7 @@ def clean_link(link):
 # Function to download and parse the phishing links
 def load_and_process_sources():
     # Load the first dataset (combined phishing and benign URLs)
-    combined_urls_url = "https://raw.githubusercontent.com/spongeb0bzzz/CSI-4900/refs/heads/main/data/combined_urls.csv"
-    combined_urls = pd.read_csv(combined_urls_url)
+    combined_urls = pd.read_csv("data/combined_urls.csv")
 
     # Drop rows with null values in 'link'
     combined_urls.dropna(subset=['link'], inplace=True)
