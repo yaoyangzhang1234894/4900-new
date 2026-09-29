@@ -14,9 +14,25 @@ from difflib import SequenceMatcher
 from threading import Thread
 from datetime import datetime
 
-page_ranking_df = pd.read_csv('data\\top10milliondomains.csv')
-page_ranking_df.columns = page_ranking_df.columns.str.strip()  # Clean column names
-page_ranking_df.set_index('Domain', inplace=True)  # Set index to 'Domain'
+# 尝试加载本地 CSV，如果失败就用空的 DataFrame 代替
+try:
+    if os.path.exists('data/top10milliondomains.csv') and os.path.getsize('data/top10milliondomains.csv') > 1000:
+        page_ranking_df = pd.read_csv('data/top10milliondomains.csv')
+        page_ranking_df.columns = page_ranking_df.columns.str.strip()
+        # 兼容不同的列名
+        if 'Domain' in page_ranking_df.columns:
+            page_ranking_df.set_index('Domain', inplace=True)
+        elif 'domain' in page_ranking_df.columns:
+            page_ranking_df.set_index('domain', inplace=True)
+        else:
+            page_ranking_df.set_index(page_ranking_df.columns[0], inplace=True)
+        print(f"Loaded page ranking data: {len(page_ranking_df)} rows")
+    else:
+        raise FileNotFoundError("top10milliondomains.csv is missing or invalid")
+except Exception as e:
+    print(f"Warning: page ranking data unavailable ({e}). Using empty DataFrame.")
+    page_ranking_df = pd.DataFrame(columns=['Open Page Rank'])
+    page_ranking_df.index.name = 'Domain'
 
 # Fetch the valid TLDs from the Public Suffix List
 valid_tlds_response = requests.get('https://raw.githubusercontent.com/publicsuffix/list/refs/heads/master/public_suffix_list.dat')

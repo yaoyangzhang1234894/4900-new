@@ -94,14 +94,14 @@ def analyze_email():
     ############################################################################################################################################################
     ## File analysis
     ############################################################################################################################################################
-    file.seek(0)
-    file_bytes_io = BytesIO(file.read())
-    
-    # Convert BytesIO to BufferedReader
-    file_buffered_reader = BufferedReader(file_bytes_io)
     file_analysis_result = []
-    logging.info(f'file: {file_buffered_reader}')
     if file_flag == 1:
+        file.seek(0)
+        file_bytes_io = BytesIO(file.read())
+        
+        # Convert BytesIO to BufferedReader
+        file_buffered_reader = BufferedReader(file_bytes_io)
+        logging.info(f'file: {file_buffered_reader}')
         file_analysis_result = predict_malicious(file_buffered_reader)
 
     logging.info(f'file analysis: {file_analysis_result}')
