@@ -2,9 +2,14 @@ AI-Driven Phishing Detection System
 
  An end-to-end ML system that detects phishing emails, malicious URLs, and suspicious PDF attachments — with explainable AI built in.
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue)
-![Flask](https://img.shields.io/badge/Flask-API-green)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange)
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBoost-Ensemble-189FDD?logo=xgboost&logoColor=white)
+![LIME + SHAP](https://img.shields.io/badge/XAI-LIME%20%2B%20SHAP-FF6F00)
+![Flask](https://img.shields.io/badge/Flask-REST%20API-000000?logo=flask&logoColor=white)
+![PyMuPDF](https://img.shields.io/badge/PyMuPDF-PDF%20Analysis-8B00FF)
+![Last Commit](https://img.shields.io/github/last-commit/yaoyangzhang1234894/4900-new?color=blue)
+![Repo Size](https://img.shields.io/github/repo-size/yaoyangzhang1234894/4900-new?color=orange)
 ![License](https://img.shields.io/badge/License-Educational-lightgrey)
 
 ---
